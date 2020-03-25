@@ -1,0 +1,1 @@
+".\.nuget\NuGet.exe" "pack" ".\AccessTokenValidation\AccessTokenValidation.csproj" -Properties Configuration=Release -Version 2.99.0

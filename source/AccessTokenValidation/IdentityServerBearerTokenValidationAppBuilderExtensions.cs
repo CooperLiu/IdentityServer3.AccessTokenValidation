@@ -155,6 +155,7 @@ namespace Owin
                         ValidIssuer = options.IssuerName,
                         ValidAudience = audience,
                         IssuerSigningToken = new X509SecurityToken(options.SigningCertificate),
+                        ValidateAudience = false, //compatible with identity server4, since resources API was removed ids4. Disable validate audience. see https://github.com/IdentityServer/IdentityServer4/issues/3705
 
                         NameClaimType = options.NameClaimType,
                         RoleClaimType = options.RoleClaimType,

@@ -47,5 +47,10 @@ namespace IdentityServer3.AccessTokenValidation
         /// The endpoint validation options.
         /// </value>
         public Lazy<OAuthBearerAuthenticationOptions> EndpointValidationOptions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the local validation options, for compatible with reference token local validation
+        /// </summary>
+        public OAuthBearerAuthenticationOptions LocalReferenceTokenValidationOptions { get; set; }
     }
 }

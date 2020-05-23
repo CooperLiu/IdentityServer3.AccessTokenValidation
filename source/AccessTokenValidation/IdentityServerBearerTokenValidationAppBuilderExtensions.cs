@@ -36,8 +36,9 @@ namespace Owin
         /// </summary>
         /// <param name="app">The application.</param>
         /// <param name="options">The options.</param>
+        /// <param name="compatibleOption"></param>
         /// <returns></returns>
-        public static IAppBuilder UseIdentityServerBearerTokenAuthentication(this IAppBuilder app, IdentityServerBearerTokenAuthenticationOptions options)
+        public static IAppBuilder UseIdentityServerBearerTokenAuthentication(this IAppBuilder app, IdentityServerBearerTokenAuthenticationOptions options, OAuthBearerAuthenticationOptions compatibleOption = null)
         {
             if (app == null) throw new ArgumentNullException("app");
             if (options == null) throw new ArgumentNullException("options");
@@ -49,6 +50,10 @@ namespace Owin
             {
                 case ValidationMode.Local:
                     middlewareOptions.LocalValidationOptions = ConfigureLocalValidation(options, loggerFactory);
+                    if (compatibleOption != null)
+                    {
+                        middlewareOptions.LocalReferenceTokenValidationOptions = compatibleOption;
+                    }
                     break;
                 case ValidationMode.ValidationEndpoint:
                     middlewareOptions.EndpointValidationOptions = ConfigureEndpointValidation(options, loggerFactory);
@@ -106,7 +111,7 @@ namespace Owin
 
         private static Lazy<OAuthBearerAuthenticationOptions> ConfigureEndpointValidation(IdentityServerBearerTokenAuthenticationOptions options, ILoggerFactory loggerFactory)
         {
-            return new Lazy<OAuthBearerAuthenticationOptions>(() => 
+            return new Lazy<OAuthBearerAuthenticationOptions>(() =>
             {
                 if (options.EnableValidationResultCache)
                 {
@@ -139,7 +144,7 @@ namespace Owin
 
         internal static Lazy<OAuthBearerAuthenticationOptions> ConfigureLocalValidation(IdentityServerBearerTokenAuthenticationOptions options, ILoggerFactory loggerFactory)
         {
-            return new Lazy<OAuthBearerAuthenticationOptions>(() => 
+            return new Lazy<OAuthBearerAuthenticationOptions>(() =>
             {
                 JwtFormat tokenFormat = null;
 
@@ -156,7 +161,7 @@ namespace Owin
                         ValidAudience = audience,
                         IssuerSigningToken = new X509SecurityToken(options.SigningCertificate),
                         ValidateAudience = false, //compatible with identity server4, since resources API was removed ids4. Disable validate audience. see https://github.com/IdentityServer/IdentityServer4/issues/3705
-
+                        
                         NameClaimType = options.NameClaimType,
                         RoleClaimType = options.RoleClaimType,
                     };
@@ -213,9 +218,9 @@ namespace Owin
         }
 
         private static SecurityKey ResolveRsaKeys(
-            string token, 
-            SecurityToken securityToken, 
-            SecurityKeyIdentifier keyIdentifier, 
+            string token,
+            SecurityToken securityToken,
+            SecurityKeyIdentifier keyIdentifier,
             TokenValidationParameters validationParameters)
         {
             string id = null;

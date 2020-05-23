@@ -36,6 +36,7 @@ namespace IdentityServer3.AccessTokenValidation
         private readonly AppFunc _next;
         private readonly Lazy<AppFunc> _localValidationFunc;
         private readonly Lazy<AppFunc> _endpointValidationFunc;
+        private readonly Lazy<AppFunc> _referenceTokenValidationFunc;
         private readonly IdentityServerOAuthBearerAuthenticationOptions _options;
         private readonly ILogger _logger;
 
@@ -54,7 +55,7 @@ namespace IdentityServer3.AccessTokenValidation
 
             if (options.LocalValidationOptions != null)
             {
-                _localValidationFunc = new Lazy<AppFunc>(() => 
+                _localValidationFunc = new Lazy<AppFunc>(() =>
                 {
                     var localBuilder = app.New();
                     localBuilder.UseOAuthBearerAuthentication(options.LocalValidationOptions.Value);
@@ -66,7 +67,7 @@ namespace IdentityServer3.AccessTokenValidation
 
             if (options.EndpointValidationOptions != null)
             {
-                _endpointValidationFunc = new Lazy<AppFunc>(() => 
+                _endpointValidationFunc = new Lazy<AppFunc>(() =>
                 {
                     var endpointBuilder = app.New();
                     endpointBuilder.Properties["host.AppName"] = "foobar";
@@ -74,6 +75,18 @@ namespace IdentityServer3.AccessTokenValidation
                     endpointBuilder.UseOAuthBearerAuthentication(options.EndpointValidationOptions.Value);
                     endpointBuilder.Run(ctx => next(ctx.Environment));
                     return endpointBuilder.Build();
+
+                }, true);
+            }
+
+            if (options.LocalReferenceTokenValidationOptions != null)
+            {
+                _referenceTokenValidationFunc = new Lazy<AppFunc>(() =>
+                {
+                    var localBuilder = app.New();
+                    localBuilder.UseOAuthBearerAuthentication(options.LocalReferenceTokenValidationOptions);
+                    localBuilder.Run(ctx => next(ctx.Environment));
+                    return localBuilder.Build();
 
                 }, true);
             }
@@ -118,6 +131,13 @@ namespace IdentityServer3.AccessTokenValidation
             }
             else
             {
+                if (_referenceTokenValidationFunc != null)
+                {
+                    await _referenceTokenValidationFunc.Value(environment);
+
+                    return;
+                }
+
                 // use validation endpoint
                 if (_endpointValidationFunc != null)
                 {
